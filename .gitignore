@@ -1,0 +1,4 @@
+*.pyc
+tmp
+.vscode
+.DS_Store
