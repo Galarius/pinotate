@@ -36,6 +36,7 @@ class Window(wx.Frame):
         self.Show()
         self.SetAutoLayout(True)
         self.Layout()
+        self.highlights = []
 
     def InitUI(self): 
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -58,9 +59,11 @@ class Window(wx.Frame):
 
         menu = wx.Menu()
         exportTxt = menu.Append(wx.ID_ANY,"Export as text...", "Export highlights as text.")
+        exportCSV = menu.Append(wx.ID_ANY,"Export as csv...", "Export highlights as csv.")
         aboutItem = menu.Append(wx.ID_ABOUT,"About", "Push the button to get an information about Pinotate.")
         exitItem = menu.Append(wx.ID_EXIT,"Exit", "Push the button to leave Pinotate.")
         self.Bind(wx.EVT_MENU, self.OnExportTxt, exportTxt)
+        self.Bind(wx.EVT_MENU, self.OnExportCSV, exportCSV)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
         self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         bar = wx.MenuBar()
@@ -78,8 +81,8 @@ class Window(wx.Frame):
         # Библиотека
         asset_id = dispatcher.get_book_asset_id(lib_db, book_title, enc=None)
         # Аннотации
-        highlights = dispatcher.get_highlights(ann_db, asset_id)
-        highlights_text = '\n'.join(highlights)
+        self.highlights = dispatcher.get_highlights(ann_db, asset_id)
+        highlights_text = '\n'.join(self.highlights)
         self.textBoxHighlights.SetValue(highlights_text)
 
     def OnExportTxt(self, event):
@@ -90,11 +93,25 @@ class Window(wx.Frame):
             filepath = dialog.GetPath()
             with open(filepath, 'w') as f:
                 f.write(self.textBoxHighlights.Value.encode('utf-8'))
-
         dialog.Destroy()
 
     def OnExportCSV(self, event):
-        pass
+
+        data = []
+        separator = ';'.encode('utf-8')
+        data.append("{0}{1}{2}".format("key", separator, "value"))
+        for highlight in self.highlights:
+            data.append("{0}{1}{2}".format(highlight.encode('utf-8'), separator, ""))
+        highlights_text = '\n'.join(data)
+
+        wildcard = "CSV files (*.csv)|*.csv|" 
+        "All files (*.*)|*.*"
+        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            filepath = dialog.GetPath()
+            with open(filepath, 'w') as f:
+                f.write(highlights_text)
+        dialog.Destroy()
 
     def OnAbout(self, e):
         aboutDlg = wx.MessageDialog(self, "pinotate","About Pinotate", wx.OK)
