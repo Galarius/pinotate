@@ -56,7 +56,7 @@ def main(argv):
     else:
         print_highlights(argv[0], dispatcher, lib_db, ann_db)
 
-    #dispatcher.clear()
+    dispatcher.clear()
 
 if __name__ == "__main__":
     main(sys.argv[1:])

@@ -119,6 +119,7 @@ class Window(wx.Frame):
         
     def OnExit(self, e):
         self.control.SetValue("Close me, please! :(")
+        dispatcher.clear()
 
 app = wx.App()
 wnd = Window(None, "Pinotate")

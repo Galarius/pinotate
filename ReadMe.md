@@ -17,7 +17,9 @@ Features
 Usage
 =====
 
-* cmd: `pinotate.py <book title>`  
+* **Make sure iBooks library is synchronized**
+
+* cmd: `pinotate.py [--list] "book title"`  
 
 * gui: `pinotate-gui.py`
 
