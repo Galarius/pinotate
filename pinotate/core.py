@@ -20,14 +20,13 @@ class IBooksDispatcher(object):
     """
     def __init__(self):
         """
-        Initialize application, save config file at: 
-        ~/Library/Containers/com.galarius.pinotate/congig.json
+        Initialize application, create config file: 
         """
         self.home = os.path.expanduser("~")
-        pref_folder = os.path.join(self.home,'Library/Containers/com.galarius.pinotate/')
+        pref_folder = './'
         if not os.path.exists(pref_folder):
             os.mkdir(pref_folder)
-        self.config_file = os.path.join(pref_folder,'config.json')
+        self.config_file = os.path.join(pref_folder, 'config.json')
         self.ibooks_doc_root = 'Library/Containers/com.apple.iBooksX/Data/Documents/'
         self.library_folder = 'BKLibrary'
         self.annotation_folder = 'AEAnnotation'
@@ -41,12 +40,12 @@ class IBooksDispatcher(object):
         Save application configuration file
         """
         with open(self.config_file, 'w') as data_file:
-            dict = {"ibooks_doc_root":self.ibooks_doc_root,
+            config = {"ibooks_doc_root":self.ibooks_doc_root,
             "library_folder":self.library_folder,
             "annotation_folder":self.annotation_folder,
             "tmp_dir":self.tmp_dir
             } 
-            data = json.dumps(dict, ensure_ascii=False)
+            data = json.dumps(config, ensure_ascii=False)
             data_file.write(data)            
 
     def __read_config(self):
