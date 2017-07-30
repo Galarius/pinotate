@@ -78,9 +78,9 @@ class Window(wx.Frame):
 
         self.SetStatusText("Selected: {}".format(book_title.encode('utf-8')))
 
-        # Библиотека
+        # Library database
         asset_id = dispatcher.get_book_asset_id(lib_db, book_title, enc=None)
-        # Аннотации
+        # Annotation database
         self.highlights = dispatcher.get_highlights(ann_db, asset_id)
         highlights_text = '\n'.join(self.highlights)
         self.textBoxHighlights.SetValue(highlights_text)
