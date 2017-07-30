@@ -16,22 +16,28 @@ def print_usage():
 
 def print_titles(dispatcher, lib_db):
     books = dispatcher.get_book_titles(lib_db)
-    for book in books:
-        print book
+    books_list_text = '\n---------------\n'.join(books)
+    if len(books):
+        print books_list_text
+    else:
+        print "There are no books in library."
 
 def print_highlights(book_title, dispatcher, lib_db, ann_db):
     # Library database
     print "looking book for `{}` in library database `{}`".format(book_title, lib_db)
     asset_id = dispatcher.get_book_asset_id(lib_db, book_title)
-    # Annotation database
-    print "looking highlights for `{}` in annotation database `{}`".format(asset_id, ann_db)
-    highlights = dispatcher.get_highlights(ann_db, asset_id)
-    if not len(highlights):
-        print "No highlights were found!"
+    if asset_id:
+        # Annotation database
+        print "looking highlights for `{}` in annotation database `{}`".format(asset_id, ann_db)
+        highlights = dispatcher.get_highlights(ann_db, asset_id)
+        if len(highlights):
+            print "Found highlights: {}".format(len(highlights))
+        else:
+            print "No highlights were found!"
+        highlights_list_text = '\n---------------\n'.join(highlights)
+        print highlights_list_text
     else:
-        print "Found highlights: {}".format(len(highlights))
-    for highlight in highlights:
-        print highlight
+        print "There is no book `{}` in library.".format(book_title)
 
 def main(argv):
 

@@ -80,9 +80,10 @@ class Window(wx.Frame):
 
         # Library database
         asset_id = dispatcher.get_book_asset_id(lib_db, book_title, enc=None)
+        
         # Annotation database
         self.highlights = dispatcher.get_highlights(ann_db, asset_id)
-        highlights_text = '\n'.join(self.highlights)
+        highlights_text = '\n---------------\n'.join(self.highlights)
         self.textBoxHighlights.SetValue(highlights_text)
 
     def OnExportTxt(self, event):
