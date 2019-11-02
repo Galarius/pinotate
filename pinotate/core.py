@@ -8,6 +8,7 @@ Pinotate core module
 __author__ = 'Ilya Shoshin (Galarius)'
 __copyright__ = 'Copyright 2016, Ilya Shoshin (Galarius)'
 
+import platform
 import sqlite3
 import shutil
 import json
@@ -110,8 +111,11 @@ class IBooksDispatcher(object):
         """
         conn = sqlite3.connect(lib_db)
         cur = conn.cursor()
-        title = ( (book_title.decode(enc) if enc else book_title), )
-        cur.execute("SELECT ZASSETID FROM ZBKLIBRARYASSET WHERE ZTITLE=?", title)
+        if platform.python_version().startswith("2."):
+            title = ( (book_title.decode(enc) if enc else book_title), )
+            cur.execute("SELECT ZASSETID FROM ZBKLIBRARYASSET WHERE ZTITLE=?", title)
+        else:
+            cur.execute("SELECT ZASSETID FROM ZBKLIBRARYASSET WHERE ZTITLE=?", (book_title,))
         result = cur.fetchone()
         asset_id = result[0] if result else None
         conn.close()

@@ -5,6 +5,7 @@ __author__ = 'Ilya Shoshin (Galarius)'
 __copyright__ = 'Copyright 2016, Ilya Shoshin (Galarius)'
 
 from pinotate import *
+import platform
 import sys
 import wx
 import os
@@ -18,11 +19,11 @@ lib_db = dispatcher.find_library_db()
 ann_db = dispatcher.find_annotation_db()
 
 if not lib_db:
-    print "failed to find iBooks library database"
+    print("failed to find iBooks library database")
     sys.exit(2)
 
 if not ann_db:
-    print "failed to find iBooks annotation database"
+    print("failed to find iBooks annotation database")
     sys.exit(3)
 
 titles = dispatcher.get_book_titles(lib_db)
@@ -52,7 +53,6 @@ class Window(wx.Frame):
         vbox.Add(self.listBoxTitles, 0, wx.EXPAND)
 
         self.textBoxHighlights = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE | wx.TE_READONLY)
-        self.textBoxHighlights.SetBackgroundColour(wx.Colour(255, 255, 128))
         vbox.Add(self.textBoxHighlights, 1, wx.EXPAND)
 
         self.SetSizer(vbox)
@@ -76,7 +76,10 @@ class Window(wx.Frame):
         '''
         book_title = self.listBoxTitles.GetStringSelection()
 
-        self.SetStatusText("Selected: {}".format(book_title.encode('utf-8')))
+        if platform.python_version().startswith("2."):
+            self.SetStatusText("Selected: {}".format(book_title.encode('utf-8')))
+        else:
+            self.SetStatusText("Selected: {}".format(book_title))
 
         # Library database
         asset_id = dispatcher.get_book_asset_id(lib_db, book_title, enc=None)
@@ -89,25 +92,33 @@ class Window(wx.Frame):
     def OnExportTxt(self, event):
         wildcard = "Text files (*.txt)|*.txt|" 
         "All files (*.*)|*.*"
-        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.SAVE)
+        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             filepath = dialog.GetPath()
-            with open(filepath, 'w') as f:
-                f.write(self.textBoxHighlights.Value.encode('utf-8'))
+            if platform.python_version().startswith("2."):
+                with open(filepath, 'w') as f:
+                    f.write(self.textBoxHighlights.Value.encode('utf-8'))
+            else:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(self.textBoxHighlights.Value)
         dialog.Destroy()
 
     def OnExportCSV(self, event):
 
         data = []
-        separator = ';'.encode('utf-8')
-        data.append("{0}{1}{2}".format("key", separator, "value"))
+        separator = ';'
+
+        data.append("{}{}".format("key", separator))
         for highlight in self.highlights:
-            data.append("{0}{1}{2}".format(highlight.encode('utf-8'), separator, ""))
+            if platform.python_version().startswith("2."):
+                data.append("{}{}".format(highlight.encode('utf-8'), separator.encode('utf-8')))
+            else:
+                data.append("{}{}".format(highlight, separator))
         highlights_text = '\n'.join(data)
 
         wildcard = "CSV files (*.csv)|*.csv|" 
         "All files (*.*)|*.*"
-        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.SAVE)
+        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             filepath = dialog.GetPath()
             with open(filepath, 'w') as f:
