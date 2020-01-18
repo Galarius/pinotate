@@ -1,68 +1,95 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Ilya Shoshin (Galarius)'
-__copyright__ = 'Copyright 2016, Ilya Shoshin (Galarius)'
+__author__ = 'Galarius'
+__copyright__ = 'Copyright 2020, Galarius'
 
+import os
+import re
 import sys
+import argparse
 
 from pinotate import IBooksDispatcher
 
-def print_usage():
-    print("""
-          `pinotate.py --list` to print all book titles
-          `pinotate.py "book title"` to print all highlights from the selected book
-          """)
+# source: https://github.com/django/django/blob/master/django/utils/text.py
+def valid_filename(s):
+    return re.sub(r'(?u)[^-\w.]', '', str(s).strip().replace(' ', '_'))        
 
-def print_titles(dispatcher, lib_db):
-    books = dispatcher.get_book_titles(lib_db)
-    books_list_text = '\n---------------\n'.join(books)
-    if len(books):
-        print(books_list_text)
-    else:
-        print("There are no books in library.")
+class IBooksWorker (object):
+    def __init__(self):
+        self.dispatcher = IBooksDispatcher()
+        self.lib_db = self.dispatcher.find_library_db()
+        self.ann_db = self.dispatcher.find_annotation_db()
+        self.__assert_db()
 
-def print_highlights(book_title, dispatcher, lib_db, ann_db):
-    # Library database
-    print("looking book for `{}` in library database `{}`".format(book_title, lib_db))
-    asset_id = dispatcher.get_book_asset_id(lib_db, book_title)
-    if asset_id:
-        # Annotation database
-        print("looking highlights for `{}` in annotation database `{}`".format(asset_id, ann_db))
-        highlights = dispatcher.get_highlights(ann_db, asset_id)
-        if len(highlights):
-            print("Found highlights: {}".format(len(highlights)))
-        else:
-            print("No highlights were found!")
-        highlights_list_text = '\n---------------\n'.join(highlights)
-        print(highlights_list_text)
-    else:
-        print("There is no book `{}` in library.".format(book_title))
+    def __enter__(self):
+        return self
 
-def main(argv):
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.dispatcher.clear()
 
-    if not len(argv):
-        print_usage()
-        sys.exit(1)
+    def __assert_db(self):
+        if not self.lib_db:
+            print("Failed to find iBooks library database.")
+            sys.exit(2)
+        if not self.ann_db:
+            print("Failed to find iBooks annotation database.")
+            sys.exit(3)
 
-    dispatcher = IBooksDispatcher()
-    lib_db = dispatcher.find_library_db()
-    ann_db = dispatcher.find_annotation_db()
+    def titles(self):
+        return self.dispatcher.get_book_titles(self.lib_db)
 
-    if not lib_db:
-        print("failed to find iBooks library database")
-        sys.exit(2)
+    def export(self, book, out_dir):
+        if book:
+            self.__export(book, out_dir)
+            return
 
-    if not ann_db:
-        print("failed to find iBooks annotation database")
-        sys.exit(3)
+        for title in self.titles():    
+            self.__export(title, out_dir)
 
-    if argv[0] == '--list':
-        print_titles(dispatcher, lib_db)
-    else:
-        print_highlights(argv[0], dispatcher, lib_db, ann_db)
+    def __export(self, title, out_dir):
+        asset_id = self.__asset_id(title)    
+        if not asset_id:
+            print("There is no book `{}` in library.".format(title))
+            return
+        highlights = self.__highlights(asset_id)    
+        if not len(highlights):
+            print("No highlights were found in book `{}`.".format(title))
+            return
+        self.__save(title, highlights, out_dir)
+    
+    def __asset_id(self, title):
+        return self.dispatcher.get_book_asset_id(self.lib_db, title)
 
-    dispatcher.clear()
+    def __highlights(self, asset_id):
+        return self.dispatcher.get_highlights(self.ann_db, asset_id)
+
+    def __save(self, title, highlights, out_dir):
+        filename = os.path.join(out_dir, "{}.md".format(valid_filename(title)))
+        with open(filename, 'w') as md_file:
+            md_file.write("# {}\n\n".format(title))
+            for highlight in highlights:
+                md_file.write("> {}\n\n".format(highlight))
+        print('Created file "{}"'.format(filename))
+
+def main(args):
+    # print titles
+    if args.list:
+        with IBooksWorker() as worker:
+            titles = worker.titles()
+            print('\n'.join(titles))
+        return
+    # create output dir if needed
+    if not (os.path.exists(args.out) and os.path.isdir(args.out)):
+        os.makedirs(args.out)
+    # export
+    with IBooksWorker() as worker:
+        worker.export(args.title, args.out)
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    ap = argparse.ArgumentParser(description="Export iBooks highlights")
+    ap.add_argument('-o', '--out', default='./', help='output directory')
+    ap.add_argument('-l', '--list', action="store_true", help='print books titles')
+    ap.add_argument('title', metavar='title', nargs='?', help='export highlights of a specific book only (optional)')
+    args = ap.parse_args()
+    main(args)
