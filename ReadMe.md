@@ -1,32 +1,28 @@
 Pinotate
 ========
 
+> Export iBooks highlights
+
+```
+usage: pinotate.py [-h] [-o OUT] [-l] [title]
+
 Export iBooks highlights
 
-Features
-========
+positional arguments:
+  title              export only this book's highlights
 
-* command line and gui interface  
+optional arguments:
+  -h, --help         show this help message and exit
+  -o OUT, --out OUT  output directory
+  -l, --list         print books titles
 
-* iBooks library viewer  
+Run `pinotate.py` to export all highlights to the current directory
+```
 
-* highlights export as text  
+## Pinotate GUI
 
-* highlights export as csv to provide additional notes in convenient form  
-
-Usage
-=====
-
-* **Make sure iBooks library is synchronized**
-
-* cmd: `pinotate.py [--list] "book title"`  
-
-* gui: `pinotate-gui.py`
-
-Requirements
-============
-
-* [wxPython](https://wxpython.org/download.php#osx) for GUI
+* [wxPython](https://wxpython.org/download.php#osx)
+* [markdown](https://pypi.org/project/Markdown/)
 
 LICENSE
 =======
