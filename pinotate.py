@@ -32,6 +32,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Export iBooks highlights", epilog="Run `pinotate.py` to export all highlights to the current directory")
     ap.add_argument('-o', '--out', default='./', help='output directory')
     ap.add_argument('-l', '--list', action="store_true", help='print books titles')
-    ap.add_argument('only', metavar='title', nargs='?', help="export only this book's highlights")
+    ap.add_argument('title', metavar='title', nargs='?', help="export only this book's highlights")
     args = ap.parse_args()
     main(args)
