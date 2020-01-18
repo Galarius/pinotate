@@ -8,6 +8,6 @@ __author__ = 'Galarius'
 __copyright__ = 'Copyright 2020, Galarius'
 
 from core.worker import IBooksWorker
-from core.utils import generate_md
+from core.utils import generate_md, valid_filename
 
-__all__ = ['IBooksWorker', 'generate_md']
+__all__ = ['IBooksWorker', 'generate_md', 'valid_filename']

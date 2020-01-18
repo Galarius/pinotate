@@ -11,7 +11,7 @@ import wx.html2
 import os
 from markdown import markdown
 
-from core import generate_md
+from core import generate_md, valid_filename
 from core import IBooksWorker
 
 wxID_FRAME_LISTBOX_TITLES = wx.NewIdRef(count=1)
@@ -71,7 +71,7 @@ class Window(wx.Frame):
     def OnExportMd(self, event):
         if len(self.content) == 0:
             return
-        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), self.title, "Markdown files (*.md)|*.md|", wx.FD_SAVE)
+        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), valid_filename(self.title), "Markdown files (*.md)|*.md|", wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             filepath = dialog.GetPath()
             with open(filepath, 'w') as f:
