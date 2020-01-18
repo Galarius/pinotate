@@ -1,137 +1,86 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Ilya Shoshin (Galarius)'
-__copyright__ = 'Copyright 2016, Ilya Shoshin (Galarius)'
+__author__ = 'Galarius'
+__copyright__ = 'Copyright 2020, Galarius'
 
-from pinotate import *
 import platform
 import sys
 import wx
+import wx.html2 
 import os
+from markdown import markdown
 
-wxID_FRAME_LISTBOX_TITLES = wx.NewId()
-wxID_FRAME_BUTTON_EXPORT = wx.NewId()
+from core import generate_md
+from core import IBooksWorker
 
-
-dispatcher = IBooksDispatcher()
-lib_db = dispatcher.find_library_db()
-ann_db = dispatcher.find_annotation_db()
-
-if not lib_db:
-    print("failed to find iBooks library database")
-    sys.exit(2)
-
-if not ann_db:
-    print("failed to find iBooks annotation database")
-    sys.exit(3)
-
-titles = dispatcher.get_book_titles(lib_db)
+wxID_FRAME_LISTBOX_TITLES = wx.NewIdRef(count=1)
+wxID_FRAME_BUTTON_EXPORT = wx.NewIdRef(count=1)
 
 class Window(wx.Frame):
     def __init__(self, parent, title):
         super(Window, self).__init__(parent, title = title, size = (640,480))      
+        self.worker = IBooksWorker()
         self.InitUI() 
         self.CreateStatusBar()
         self.Centre() 
         self.Show()
         self.SetAutoLayout(True)
         self.Layout()
-        self.highlights = []
 
     def InitUI(self): 
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        titles = self.worker.titles()
 
-        lblTitle = wx.TextCtrl(self, style=wx.TE_READONLY)
-        lblTitle.SetValue("iBooks Library")
-        vbox.Add(lblTitle, 0, wx.LEFT) 
-
-        self.listBoxTitles = wx.ListBox(choices=titles, 
-            id=wxID_FRAME_LISTBOX_TITLES,
-            name='listBoxTitles', parent=self)
-        self.listBoxTitles.Bind(wx.EVT_LISTBOX, self.OnListBoxListbox, id=wxID_FRAME_LISTBOX_TITLES)
-        vbox.Add(self.listBoxTitles, 0, wx.EXPAND)
-
-        self.textBoxHighlights = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE | wx.TE_READONLY)
-        vbox.Add(self.textBoxHighlights, 1, wx.EXPAND)
-
-        self.SetSizer(vbox)
+        wxVbox = wx.BoxSizer(wx.VERTICAL)
+        
+        wxText = wx.TextCtrl(self, style=wx.TE_READONLY)
+        wxText.SetValue("iBooks Library")
+        wxVbox.Add(wxText, 0, wx.LEFT) 
+        
+        self.wxListBox = wx.ListBox(choices=titles, id=wxID_FRAME_LISTBOX_TITLES, parent=self)
+        self.wxListBox.Bind(wx.EVT_LISTBOX, self.OnRowSelected, id=wxID_FRAME_LISTBOX_TITLES)
+        wxVbox.Add(self.wxListBox, 0, wx.EXPAND)
+        
+        self.browser = wx.html2.WebView.New(self) 
+        wxVbox.Add(self.browser, 1, wx.EXPAND)
+        
+        self.SetSizer(wxVbox)
 
         menu = wx.Menu()
-        exportTxt = menu.Append(wx.ID_ANY,"Export as text...", "Export highlights as text.")
-        exportCSV = menu.Append(wx.ID_ANY,"Export as csv...", "Export highlights as csv.")
-        aboutItem = menu.Append(wx.ID_ABOUT,"About", "Push the button to get an information about Pinotate.")
-        exitItem = menu.Append(wx.ID_EXIT,"Exit", "Push the button to leave Pinotate.")
-        self.Bind(wx.EVT_MENU, self.OnExportTxt, exportTxt)
-        self.Bind(wx.EVT_MENU, self.OnExportCSV, exportCSV)
+        exportMd = menu.Append(wx.ID_ANY,"Export...", "Export highlights.")
+        aboutItem = menu.Append(wx.ID_ABOUT,"About...", "About Pinotate.")
+        self.Bind(wx.EVT_MENU, self.OnExportMd, exportMd)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
-        self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
         bar = wx.MenuBar()
         bar.Append(menu, "File")
         self.SetMenuBar(bar)
 
-    def OnListBoxListbox(self, event):
-        '''
-        click list item and display the selected string in frame's title
-        '''
-        book_title = self.listBoxTitles.GetStringSelection()
-
+    def OnRowSelected(self, event):
+        self.content = ""
+        self.title = self.wxListBox.GetStringSelection()
         if platform.python_version().startswith("2."):
-            self.SetStatusText("Selected: {}".format(book_title.encode('utf-8')))
+            self.SetStatusText("{}".format(self.title.encode('utf-8')))
         else:
-            self.SetStatusText("Selected: {}".format(book_title))
+            self.SetStatusText("{}".format(self.title))
+        asset_id = self.worker.asset_id(self.title)
+        highlights = self.worker.highlights(asset_id)
+        if highlights:
+            self.content = generate_md(self.title, highlights)
+        self.browser.SetPage(markdown(self.content), "")
 
-        # Library database
-        asset_id = dispatcher.get_book_asset_id(lib_db, book_title, enc=None)
-        
-        # Annotation database
-        self.highlights = dispatcher.get_highlights(ann_db, asset_id)
-        highlights_text = '\n---------------\n'.join(self.highlights)
-        self.textBoxHighlights.SetValue(highlights_text)
-
-    def OnExportTxt(self, event):
-        wildcard = "Text files (*.txt)|*.txt|" 
-        "All files (*.*)|*.*"
-        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.FD_SAVE)
-        if dialog.ShowModal() == wx.ID_OK:
-            filepath = dialog.GetPath()
-            if platform.python_version().startswith("2."):
-                with open(filepath, 'w') as f:
-                    f.write(self.textBoxHighlights.Value.encode('utf-8'))
-            else:
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(self.textBoxHighlights.Value)
-        dialog.Destroy()
-
-    def OnExportCSV(self, event):
-
-        data = []
-        separator = ';'
-
-        data.append("{}{}".format("key", separator))
-        for highlight in self.highlights:
-            if platform.python_version().startswith("2."):
-                data.append("{}{}".format(highlight.encode('utf-8'), separator.encode('utf-8')))
-            else:
-                data.append("{}{}".format(highlight, separator))
-        highlights_text = '\n'.join(data)
-
-        wildcard = "CSV files (*.csv)|*.csv|" 
-        "All files (*.*)|*.*"
-        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.FD_SAVE)
+    def OnExportMd(self, event):
+        if len(self.content) == 0:
+            return
+        dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), self.title, "Markdown files (*.md)|*.md|", wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             filepath = dialog.GetPath()
             with open(filepath, 'w') as f:
-                f.write(highlights_text)
+                f.write(self.content)
         dialog.Destroy()
 
     def OnAbout(self, e):
-        aboutDlg = wx.MessageDialog(self, "pinotate","About Pinotate", wx.OK)
+        aboutDlg = wx.MessageDialog(self, "Export iBooks highlights","About Pinotate", wx.OK)
         aboutDlg.ShowModal()
-        
-    def OnExit(self, e):
-        self.control.SetValue("Close me, please! :(")
-        dispatcher.clear()
 
 app = wx.App()
 wnd = Window(None, "Pinotate")
