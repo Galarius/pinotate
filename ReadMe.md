@@ -21,6 +21,8 @@ Run `pinotate.py` to export all highlights to the current directory
 
 ## Pinotate GUI
 
+Requirements:
+
 * [wxPython](https://wxpython.org/download.php#osx)
 * [markdown](https://pypi.org/project/Markdown/)
 
