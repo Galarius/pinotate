@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = 'Galarius'
@@ -6,6 +6,11 @@ __copyright__ = 'Copyright 2020, Galarius'
 
 import platform
 import sys
+
+if platform.python_version().startswith("2."):
+    print('Python3 is required')
+    sys.exit(1)
+
 import wx
 import wx.html2 
 import os
@@ -58,10 +63,7 @@ class Window(wx.Frame):
     def OnRowSelected(self, event):
         self.content = ""
         self.title = self.wxListBox.GetStringSelection()
-        if platform.python_version().startswith("2."):
-            self.SetStatusText("{}".format(self.title.encode('utf-8')))
-        else:
-            self.SetStatusText("{}".format(self.title))
+        self.SetStatusText("{}".format(self.title))
         asset_id = self.worker.asset_id(self.title)
         highlights = self.worker.highlights(asset_id)
         if highlights:

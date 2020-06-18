@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = 'Galarius'
@@ -7,6 +7,7 @@ __copyright__ = 'Copyright 2020, Galarius'
 import os
 import sys
 import argparse
+import platform
 
 from core import IBooksWorker
 
@@ -29,6 +30,10 @@ def main(args):
         worker.export_all(args.out)
 
 if __name__ == "__main__":
+    if platform.python_version().startswith("2."):
+        print('Python3 is required')
+        sys.exit(1)
+
     ap = argparse.ArgumentParser(description="Export iBooks highlights", epilog="Run `pinotate.py` to export all highlights to the current directory")
     ap.add_argument('-o', '--out', default='./', help='output directory')
     ap.add_argument('-l', '--list', action="store_true", help='print books titles')
