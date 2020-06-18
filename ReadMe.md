@@ -18,6 +18,9 @@ optional arguments:
 
 Run `pinotate.py` to export all highlights to the current directory
 ```
+Requirements:
+
+* Python3
 
 ## Pinotate GUI
 
