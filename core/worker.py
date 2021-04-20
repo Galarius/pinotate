@@ -36,14 +36,14 @@ class IBooksWorker (object):
     def highlights(self, asset_id):
         return self.dispatcher.get_highlights(self.ann_db, asset_id)
 
-    def export(self, book, out_dir):
-        self.__export(book, out_dir)
+    def export(self, args):
+        self.__export(args.title, args.out, args.headings, args.sort)
     
-    def export_all(self, out_dir):
+    def export_all(self, args):
         for title in self.titles():    
-            self.__export(title, out_dir)
+            self.__export(title, args.out, args.headings, args.sort)
 
-    def __export(self, title, out_dir):
+    def __export(self, title, out_dir, with_headings=True, normal_sorting=True):
         asset_id = self.asset_id(title)    
         if not asset_id:
             print("There is no book `{}` in library.".format(title))
@@ -52,11 +52,11 @@ class IBooksWorker (object):
         if not len(highlights):
             print("No highlights were found in book `{}`.".format(title))
             return
-        self.__save(title, highlights, out_dir)
+        self.__save(title, highlights, out_dir, with_headings, normal_sorting)
 
-    def __save(self, title, highlights, out_dir):
+    def __save(self, title, highlights, out_dir, with_headings=True, normal_sorting=True):
         filename = os.path.join(out_dir, "{}.md".format(valid_filename(title)))
-        md = generate_md(title, highlights)
+        md = generate_md(title, highlights, with_headings, normal_sorting)
         with open(filename, 'w') as md_file:
             md_file.write(md)
         print('Created file "{}"'.format(filename))
