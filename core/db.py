@@ -126,8 +126,10 @@ class IBooksDispatcher(object):
         cur = conn.cursor()
         a_id = (asset_id,)
         highlights = []
-        for row in cur.execute("SELECT ZANNOTATIONSELECTEDTEXT FROM ZAEANNOTATION WHERE ZANNOTATIONASSETID=? AND ZANNOTATIONSELECTEDTEXT <> ''", a_id):
-            highlights.append(row[0])
+        for row, heading, created, location in cur.execute("SELECT ZANNOTATIONSELECTEDTEXT, ZFUTUREPROOFING5, ZANNOTATIONCREATIONDATE, ZANNOTATIONLOCATION FROM ZAEANNOTATION WHERE ZANNOTATIONASSETID=? AND ZANNOTATIONSELECTEDTEXT <> '' AND ZANNOTATIONDELETED=0", a_id):
+            chapter = int(location.split('[')[0].split('/')[2].replace(',', ''))
+            ref_in_chapter = int(location.split('!')[1].split('/')[2].replace(',', ''))
+            highlights.append((row, heading, float(created), chapter, ref_in_chapter))
         conn.close()
         return highlights
 
