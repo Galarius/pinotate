@@ -7,6 +7,8 @@ Pinotate core module
 __author__ = 'Galarius'
 __copyright__ = 'Copyright 2020, Galarius'
 
+from .highlight import Highlight
+
 import sqlite3
 import shutil
 import json
@@ -128,8 +130,12 @@ class IBooksDispatcher(object):
         highlights = []
         for row, heading, created, location in cur.execute("SELECT ZANNOTATIONSELECTEDTEXT, ZFUTUREPROOFING5, ZANNOTATIONCREATIONDATE, ZANNOTATIONLOCATION FROM ZAEANNOTATION WHERE ZANNOTATIONASSETID=? AND ZANNOTATIONSELECTEDTEXT <> '' AND ZANNOTATIONDELETED=0", a_id):
             chapter = int(location.split('[')[0].split('/')[2].replace(',', ''))
-            ref_in_chapter = int(location.split('!')[1].split('/')[2].replace(',', ''))
-            highlights.append((row, heading, float(created), chapter, ref_in_chapter))
+            try:
+                ref_in_chapter = int(location.split('!')[1].split('/')[2].replace(',', ''))
+            except ValueError:
+                ref_in_chapter = 0
+            highligt = Highlight(row, heading, float(created), chapter, ref_in_chapter)
+            highlights.append(highligt)
         conn.close()
         return highlights
 
