@@ -1,0 +1,4 @@
+# pinotate-gui requirements
+# Run command: `pip3 install -r requirements.txt`
+wx-py
+markdown
