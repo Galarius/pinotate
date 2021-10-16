@@ -9,7 +9,7 @@ usage: pinotate.py [-h] [-o OUT] [-l] [--headings] [-s] [title]
 Export iBooks highlights
 
 positional arguments:
-  title              export only this book's highlights
+  title              export highlights of the book with specific title (optional)
 
 optional arguments:
   -h, --help         show this help message and exit
