@@ -40,7 +40,7 @@ class Window(wx.Frame):
         
         wxText = wx.TextCtrl(self, style=wx.TE_READONLY)
         wxText.SetValue("iBooks Library")
-        wxVbox.Add(wxText, 0, wx.LEFT) 
+        wxVbox.Add(wxText, 0, wx.EXPAND) 
         
         self.wxListBox = wx.ListBox(choices=titles, id=wxID_FRAME_LISTBOX_TITLES, parent=self)
         self.wxListBox.Bind(wx.EVT_LISTBOX, self.OnRowSelected, id=wxID_FRAME_LISTBOX_TITLES)
