@@ -2,4 +2,5 @@
 tmp
 .vscode
 .DS_Store
+.pyenv
 config.json
