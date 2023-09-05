@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 class Highlight:
     def __init__(self, text, heading, created, chapter, ref_in_chapter):

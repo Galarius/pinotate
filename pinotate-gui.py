@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 __author__ = 'Galarius'
 __copyright__ = 'Copyright 2020, Galarius'
