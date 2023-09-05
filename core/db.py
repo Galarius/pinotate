@@ -9,6 +9,7 @@ __copyright__ = 'Copyright 2020, Galarius'
 
 from .highlight import Highlight
 
+import tempfile
 import sqlite3
 import shutil
 import json
@@ -31,7 +32,7 @@ class IBooksDispatcher(object):
         self.ibooks_doc_root = 'Library/Containers/com.apple.iBooksX/Data/Documents/'
         self.library_folder = 'BKLibrary'
         self.annotation_folder = 'AEAnnotation'
-        self.tmp_dir = './tmp'
+        self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.config_file):
             self.__write_config()
         self.__read_config()
