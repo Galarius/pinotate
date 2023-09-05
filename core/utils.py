@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
-
 import re 
-from datetime import datetime, timedelta
-from dateutil import tz
+from datetime import datetime, timedelta, timezone
+
 
 # source: https://github.com/django/django/blob/master/django/utils/text.py
 def valid_filename(s):
     return re.sub(r'(?u)[^-\w.]', '', str(s).strip().replace(' ', '_'))
 
 def datetime_to_local(seconds_since_ref_date):
-    reference_date = datetime(2001, 1, 1, 0, 0, 0)
+    reference_date = datetime(2001, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     delta_since_reference = timedelta(seconds=seconds_since_ref_date)
     utc = (reference_date + delta_since_reference)
-    from_zone = tz.tzutc()
-    to_zone = tz.tzlocal()
-    utc = utc.replace(tzinfo=from_zone)
-    return utc.astimezone(to_zone).strftime('%c')
+    local_time = utc.astimezone()
+    return local_time.strftime('%c')
 
 def generate_md(title, highlights, with_headings=True, normal_sorting=True):
     text = '# {}\n\n'.format(title)    

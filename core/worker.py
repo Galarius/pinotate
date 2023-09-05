@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from .db import IBooksDispatcher
 from .utils import valid_filename, generate_md
 

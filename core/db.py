@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Pinotate core module
 """
@@ -9,6 +7,7 @@ __copyright__ = 'Copyright 2020, Galarius'
 
 from .highlight import Highlight
 
+import tempfile
 import sqlite3
 import shutil
 import json
@@ -31,7 +30,7 @@ class IBooksDispatcher(object):
         self.ibooks_doc_root = 'Library/Containers/com.apple.iBooksX/Data/Documents/'
         self.library_folder = 'BKLibrary'
         self.annotation_folder = 'AEAnnotation'
-        self.tmp_dir = './tmp'
+        self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.config_file):
             self.__write_config()
         self.__read_config()
@@ -124,28 +123,35 @@ class IBooksDispatcher(object):
         if not asset_id:
             return None
 
-        conn = sqlite3.connect(ann_db)
-        cur = conn.cursor()
-        a_id = (asset_id,)
         highlights = []
-        for row, heading, created, location in cur.execute(
-            """SELECT ZANNOTATIONSELECTEDTEXT, 
-                      ZFUTUREPROOFING5, 
-                      ZANNOTATIONCREATIONDATE, 
-                      ZANNOTATIONLOCATION 
-                FROM ZAEANNOTATION 
-                WHERE ZANNOTATIONASSETID=? 
-                AND ZANNOTATIONSELECTEDTEXT <> '' 
-                AND ZANNOTATIONDELETED=0
-            """, a_id):
-            chapter = int(location.split('[')[0].split('/')[2].replace(',', ''))
-            try:
-                ref_in_chapter = int(location.split('!')[1].split('/')[2].replace(',', ''))
-            except ValueError:
-                ref_in_chapter = 0
-            highligt = Highlight(row, heading, float(created), chapter, ref_in_chapter)
-            highlights.append(highligt)
-        conn.close()
+        try:
+            with sqlite3.connect(ann_db) as conn:
+                cur = conn.cursor()
+                a_id = (asset_id,)
+                for row, heading, created, location in cur.execute(
+                    """SELECT ZANNOTATIONSELECTEDTEXT, 
+                            ZFUTUREPROOFING5, 
+                            ZANNOTATIONCREATIONDATE, 
+                            ZANNOTATIONLOCATION 
+                        FROM ZAEANNOTATION 
+                        WHERE ZANNOTATIONASSETID=? 
+                        AND ZANNOTATIONSELECTEDTEXT <> '' 
+                        AND ZANNOTATIONDELETED=0
+                    """, a_id):
+                    chapter = 0
+                    ref_in_chapter = 0
+                    if location:
+                        try:
+                            chapter = int(location.split('[')[0].split('/')[2].replace(',', ''))
+                            ref_in_chapter = int(location.split('!')[1].split('/')[2].replace(',', ''))
+                        except:
+                            pass
+                    highligt = Highlight(row, heading, float(created), chapter, ref_in_chapter)
+                    highlights.append(highligt)
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return []
+
         return highlights
 
     def clear(self):
